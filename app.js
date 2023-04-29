@@ -10,26 +10,19 @@ const Users = require("./models/Users");
 const Conversations = require("./models/Conversations");
 const Messages = require("./models/Messages");
 const https = require("https");
-const io = require("socket.io");
 
 const PORT_BACKEND = process.env.PORT_BACKEND || 8000;
 const PORT_SOCKET = process.env.PORT_SOCKET || 8900;
 
-// const io = require("socket.io")(PORT_SOCKET, {
-//   cors: {
-//     origin: process.env.FRONTEND_URL,
-//   },
+// const server = https.createServer();
+
+// const socketServer = io(server, {
+//   origin: process.env.FRONTEND_URL,
 // });
 
-const server = https.createServer();
-
-const socketServer = io(server, {
-  origin: process.env.FRONTEND_URL,
-});
-
-server.listen(PORT_SOCKET, () => {
-  console.log(`Socket server is running on ${PORT_SOCKET}`);
-});
+// server.listen(PORT_SOCKET, () => {
+//   console.log(`Socket server is running on ${PORT_SOCKET}`);
+// });
 
 const app = express();
 app.use(express.json());
@@ -42,10 +35,20 @@ app.use(
   })
 );
 
+const server = app.listen(PORT_BACKEND, () => {
+  console.log(`Server is running on ${PORT_BACKEND}`);
+});
+
+const io = require("socket.io")(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL,
+  },
+});
+
 let users = [];
-socketServer.on("connection", (socket) => {
+io.on("connection", (socket) => {
   console.log("User connected", socket.id);
-  console.log("Socket running on port", PORT_SOCKET);
+  console.log("Socket running on port", PORT_BACKEND);
   socket.on("addUser", (userId) => {
     const isUserExist = users.find((user) => user.userId === userId);
     if (!isUserExist) {
@@ -326,6 +329,6 @@ mongoose.connection.once("open", () => {
   console.log("Connected to MongoDB");
 });
 
-app.listen(PORT_BACKEND, () => {
-  console.log(`Backend server is running on ${PORT_BACKEND}`);
-});
+// app.listen(PORT_BACKEND, () => {
+//   console.log(`Backend server is running on ${PORT_BACKEND}`);
+// });
